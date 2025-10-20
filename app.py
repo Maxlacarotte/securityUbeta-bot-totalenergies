@@ -55,8 +55,33 @@ st.markdown("""
         background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     }
     
-    /* Masquer la barre supérieure de Streamlit (Deploy, Settings, etc.) */
-    header[data-testid="stHeader"] {
+    /* GARDER le header visible sur MOBILE UNIQUEMENT pour le hamburger */
+    @media (min-width: 769px) {
+        header[data-testid="stHeader"] {
+            display: none;
+        }
+    }
+    
+    /* Sur mobile, styliser le header avec les couleurs TotalEnergies */
+    @media (max-width: 768px) {
+        header[data-testid="stHeader"] {
+            background: linear-gradient(90deg, #0054A6 0%, #003d7a 100%);
+        }
+        
+        /* Styliser le bouton hamburger */
+        button[kind="header"] {
+            color: white !important;
+        }
+        
+        /* Icône hamburger en blanc */
+        header[data-testid="stHeader"] svg {
+            fill: white !important;
+            stroke: white !important;
+        }
+    }
+    
+    /* Masquer le menu hamburger sur desktop */
+    #MainMenu {
         display: none;
     }
     
@@ -229,11 +254,9 @@ st.markdown("""
             font-size: 1em;
         }
         
-        /* Afficher le bouton hamburger pour la sidebar */
-        button[kind="header"] {
-            display: block !important;
-            background: #0054A6 !important;
-            color: white !important;
+        /* Ajuster le padding top pour compenser le header visible */
+        .main .block-container {
+            padding-top: 4rem !important;
         }
     }
 </style>
