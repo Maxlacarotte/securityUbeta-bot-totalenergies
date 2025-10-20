@@ -68,16 +68,24 @@ st.markdown("""
             background: linear-gradient(90deg, #0054A6 0%, #003d7a 100%);
         }
         
-        /* Styliser le bouton hamburger */
+        /* Styliser le bouton hamburger en BLANC */
         button[kind="header"] {
             color: white !important;
         }
         
-        /* Icône hamburger en blanc */
+        /* Icône hamburger en BLANC */
         header[data-testid="stHeader"] svg {
             fill: white !important;
             stroke: white !important;
         }
+        
+        /* Alternative: mettre en jaune si tu préfères */
+        /* 
+        header[data-testid="stHeader"] svg {
+            fill: #FFD700 !important;
+            stroke: #FFD700 !important;
+        }
+        */
     }
     
     /* Masquer le menu hamburger sur desktop */
@@ -254,9 +262,14 @@ st.markdown("""
             font-size: 1em;
         }
         
+        /* Supprimer complètement la barre blanche au-dessus sur mobile */
+        .block-container {
+            padding-top: 0 !important;
+        }
+        
         /* Ajuster le padding top pour compenser le header visible */
         .main .block-container {
-            padding-top: 4rem !important;
+            padding-top: 0.5rem !important;
         }
     }
 </style>
