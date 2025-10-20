@@ -36,7 +36,7 @@ st.set_page_config(
     page_title="Assistant Sécurité - Projet Ubeta",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"  # Fermée par défaut sur mobile
 )
 
 # === STYLES CSS PERSONNALISÉS ===
@@ -57,11 +57,6 @@ st.markdown("""
     
     /* Masquer la barre supérieure de Streamlit (Deploy, Settings, etc.) */
     header[data-testid="stHeader"] {
-        display: none;
-    }
-    
-    /* Masquer le menu hamburger */
-    #MainMenu {
         display: none;
     }
     
@@ -218,111 +213,30 @@ st.markdown("""
         animation: pulse 2s infinite;
     }
     
-    /* Responsive mobile - Auto-hide sidebar */
+    /* RESPONSIVE MOBILE - Ajustements */
     @media (max-width: 768px) {
-        [data-testid="stSidebar"] {
-            transition: transform 0.3s ease-in-out;
+        .main-card {
+            padding: 20px;
+            margin: 5px;
+            border-radius: 15px;
         }
         
-        [data-testid="stSidebar"].auto-hidden {
-            transform: translateX(-85%);
+        .main-title {
+            font-size: 1.8em;
         }
         
-        [data-testid="stSidebar"]:not(.auto-hidden) {
-            transform: translateX(0);
+        .subtitle {
+            font-size: 1em;
+        }
+        
+        /* Afficher le bouton hamburger pour la sidebar */
+        button[kind="header"] {
+            display: block !important;
+            background: #0054A6 !important;
+            color: white !important;
         }
     }
 </style>
-""", unsafe_allow_html=True)
-
-# === SCRIPT JAVASCRIPT POUR AUTO-HIDE SUR MOBILE ===
-st.markdown("""
-<script>
-// Auto-hide sidebar sur mobile après 2 secondes
-(function() {
-    // Vérifier si on est sur mobile
-    function isMobile() {
-        return window.innerWidth <= 768;
-    }
-    
-    // Fonction pour cacher automatiquement la sidebar
-    function autoHideSidebar() {
-        if (!isMobile()) return;
-        
-        const sidebar = document.querySelector('[data-testid="stSidebar"]');
-        if (!sidebar) {
-            setTimeout(autoHideSidebar, 100);
-            return;
-        }
-        
-        // Attendre 2 secondes puis cacher
-        setTimeout(() => {
-            sidebar.classList.add('auto-hidden');
-        }, 2000);
-        
-        // Gérer les swipes
-        let touchStartX = 0;
-        let touchEndX = 0;
-        
-        sidebar.addEventListener('touchstart', (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-        });
-        
-        sidebar.addEventListener('touchend', (e) => {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        });
-        
-        function handleSwipe() {
-            // Swipe vers la gauche = fermer
-            if (touchStartX - touchEndX > 50) {
-                sidebar.classList.add('auto-hidden');
-            }
-            // Swipe vers la droite = ouvrir
-            if (touchEndX - touchStartX > 50) {
-                sidebar.classList.remove('auto-hidden');
-            }
-        }
-        
-        // Clic sur la bande visible réouvre la sidebar
-        sidebar.addEventListener('click', (e) => {
-            if (sidebar.classList.contains('auto-hidden')) {
-                const clickX = e.clientX;
-                if (clickX < 30) { // 8mm ≈ 30px
-                    sidebar.classList.remove('auto-hidden');
-                }
-            }
-        });
-        
-        // Réouvrir si on swipe depuis le bord gauche de l'écran
-        document.addEventListener('touchstart', (e) => {
-            if (e.touches[0].clientX < 20 && sidebar.classList.contains('auto-hidden')) {
-                touchStartX = e.touches[0].screenX;
-            }
-        });
-        
-        document.addEventListener('touchend', (e) => {
-            if (sidebar.classList.contains('auto-hidden')) {
-                touchEndX = e.changedTouches[0].screenX;
-                if (touchEndX - touchStartX > 50) {
-                    sidebar.classList.remove('auto-hidden');
-                }
-            }
-        });
-    }
-    
-    // Lancer au chargement
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', autoHideSidebar);
-    } else {
-        autoHideSidebar();
-    }
-    
-    // Relancer après mise à jour Streamlit
-    const observer = new MutationObserver(autoHideSidebar);
-    observer.observe(document.body, { childList: true, subtree: true });
-})();
-</script>
 """, unsafe_allow_html=True)
 
 # === SIDEBAR ===
