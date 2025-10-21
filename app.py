@@ -51,47 +51,9 @@ st.markdown("""
     @media (max-width: 768px) {
         header[data-testid="stHeader"] {
             background: linear-gradient(90deg, #0054A6 0%, #003d7a 100%);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
         }
-
-        /* Icônes du header et chevrons toujours BLANCS (plusieurs sélecteurs pour robustesse) */
-        header[data-testid="stHeader"] svg,
-        header[data-testid="stHeader"] svg path,
-        header [data-testid="baseButton-headerNoPadding"] svg,
-        header [data-testid="baseButton-headerNoPadding"] svg path,
-        header button[kind="header"] svg,
-        header button[kind="header"] svg path,
-        header button[title] svg,
-        header button[title] svg path,
-        [data-testid="stSidebar"] button svg,
-        [data-testid="stSidebar"] button svg path,
-        [data-testid="collapsedControl"] svg,
-        [data-testid="collapsedControl"] svg path {
-            fill: #FFFFFF !important;
-            stroke: #FFFFFF !important;
-        }
-
-        /* Supprimer la barre blanche arrondie (decoration/toolbar) qui dépasse */
-        div[data-testid="stDecoration"],
-        div[data-testid="stToolbar"] {
-            display: none !important;
-            height: 0 !important;
-            min-height: 0 !important;
-            padding: 0 !important;
-            margin: 0 !important;
-            border: 0 !important;
-        }
-
-        /* Remonter légèrement le contenu */
-        .stAppViewContainer .main .block-container {
-            padding-top: 0.5rem !important;
-            margin-top: 0 !important;
-        }
-
-        /* Adoucir le premier bloc */
-        .main-card { margin-top: 6px !important; box-shadow: 0 6px 24px rgba(0,0,0,0.08) !important; }
+        button[kind="header"] { color: white !important; }
+        header[data-testid="stHeader"] svg { fill: white !important; stroke: white !important; }
     }
 
     #MainMenu { display: none; }
@@ -146,6 +108,14 @@ st.markdown("""
 
     @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.8;} }
     .pulse-icon { animation: pulse 2s infinite; }
+
+    @media (max-width: 768px) {
+        .main-card { padding: 20px; margin: 5px; border-radius: 15px; }
+        .main-title { font-size: 1.8em; }
+        .subtitle { font-size: 1em; }
+        .block-container { padding-top: 0 !important; }
+        .main .block-container { padding-top: 0.5rem !important; }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -158,22 +128,28 @@ st.markdown("""
   const flag = "sidebar_autocollapse_done";
 
   if (isMobile && !sessionStorage.getItem(flag)) {
+    // Fonction pour cliquer sur le bouton hamburger quand il apparaît
     const tryCollapse = () => {
-      const btn =
-        document.querySelector('button[kind="header"]') ||
-        document.querySelector('header [data-testid="baseButton-headerNoPadding"]') ||
-        document.querySelector('header button[title]');
+      // Sélecteurs possibles du bouton menu selon versions Streamlit
+      const btn = document.querySelector('button[kind="header"]')
+               || document.querySelector('header [data-testid="baseButton-headerNoPadding"]')
+               || document.querySelector('header button[title]');
       if (btn) {
-        btn.click();
-        sessionStorage.setItem(flag, "1");
+        btn.click();                       // ferme la sidebar ouverte par défaut
+        sessionStorage.setItem(flag, "1"); // ne le fait qu'une fois par session
         return true;
       }
       return false;
     };
 
+    // Essai immédiat
     if (!tryCollapse()) {
-      const obs = new MutationObserver(() => { if (tryCollapse()) { obs.disconnect(); } });
+      // Observe le DOM jusqu'à ce que le header/bouton soit monté
+      const obs = new MutationObserver(() => {
+        if (tryCollapse()) { obs.disconnect(); }
+      });
       obs.observe(document.body, { childList: true, subtree: true });
+      // Sécurité: arrêt au bout de 5s
       setTimeout(() => obs.disconnect(), 5000);
     }
   }
