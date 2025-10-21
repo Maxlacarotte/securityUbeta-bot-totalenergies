@@ -210,7 +210,7 @@ q = st.text_input(
 
 st.markdown("""
 <p style='text-align: center; color: #666; font-size: 0.95em; margin-top: 15px; font-style: italic;'>
-    📚 Basé sur la documentation "Ubeta Field Development Project Environmental Impact Assessment"
+    📚 Basé sur la documentation "The 12 Golden rules, NNPC & UPSTREAM PETROLEUM SAFETY REGULATIONS 2022"
 </p>
 """, unsafe_allow_html=True)
 
