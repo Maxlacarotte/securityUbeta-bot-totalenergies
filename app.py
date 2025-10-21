@@ -1,155 +1,173 @@
 # -*- coding: utf-8 -*-
-import sys
 import os
-# === FORCE UTF-8 AVANT TOUT ===
 os.environ['PYTHONUTF8'] = '1'
 os.environ['PYTHONIOENCODING'] = 'utf-8'
 
-# === PATCH HTTPX AVANT IMPORT ===
 import httpx._models
 _original_normalize = httpx._models._normalize_header_value
-
 def _patched_normalize_header_value(value, encoding=None):
-    if isinstance(value, bytes):
-        return value
-    if isinstance(value, str):
-        return value.encode('utf-8')
+    if isinstance(value, bytes): return value
+    if isinstance(value, str): return value.encode('utf-8')
     return str(value).encode('utf-8')
-
 httpx._models._normalize_header_value = _patched_normalize_header_value
 
-# === IMPORTS APRÈS LE PATCH ===
 import streamlit as st
 from openai import OpenAI
 
-# === CONFIG ===
 client = OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 VECTOR_STORE_ID = "vs_68f64cb6fd4881919c6354cbb2db11c1"
 
-# === CONFIGURATION DE LA PAGE ===
 st.set_page_config(
     page_title="Assistant Sécurité - Projet Ubeta",
     page_icon="🛡️",
     layout="wide",
-    initial_sidebar_state="expanded"  # OUVERT par défaut pour desktop
+    initial_sidebar_state="expanded"  # ouvert par défaut (desktop)
 )
 
-# === STYLES CSS PERSONNALISÉS ===
+# === CSS ===
 st.markdown("""
 <style>
-    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
-    * { font-family: 'Montserrat', sans-serif; }
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap');
+* { font-family: 'Montserrat', sans-serif; }
+.stApp { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
 
-    .stApp { background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); }
+/* Desktop: header caché pour un look épuré */
+@media (min-width: 769px) {
+  header[data-testid="stHeader"] { display: none; }
+}
 
-    /* Cacher le header sur desktop uniquement */
-    @media (min-width: 769px) {
-        header[data-testid="stHeader"] { display: none; }
-    }
+/* Mobile: header bleu visible */
+@media (max-width: 768px) {
+  header[data-testid="stHeader"] {
+    background: linear-gradient(90deg, #0054A6 0%, #003d7a 100%);
+    z-index: 1000; /* sans position:fixed pour éviter de couvrir le toolbar */
+  }
 
-    /* Header visible et stylé sur mobile */
-    @media (max-width: 768px) {
-        header[data-testid="stHeader"] {
-            background: linear-gradient(90deg, #0054A6 0%, #003d7a 100%);
-        }
-        button[kind="header"] { color: white !important; }
-        header[data-testid="stHeader"] svg { fill: white !important; stroke: white !important; }
-    }
+  /* Chevrons et icônes TOUJOURS blancs */
+  header[data-testid="stHeader"] svg,
+  header[data-testid="stHeader"] svg path,
+  [data-testid="collapsedControl"] svg,
+  [data-testid="collapsedControl"] svg path {
+    fill: #FFFFFF !important;
+    stroke: #FFFFFF !important;
+  }
 
-    #MainMenu { display: none; }
-    footer { display: none; }
+  /* Ne PAS masquer le toolbar: on le rabat visuellement pour supprimer l'effet "gros pill" blanc */
+  div[data-testid="stToolbar"] {
+    background: transparent !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    height: 32px !important;      /* réduit */
+    min-height: 32px !important;
+    padding: 0 8px !important;
+    margin: 0 !important;
+  }
 
-    .block-container { padding-top: 1rem !important; }
-    .main .block-container { padding-top: 1rem !important; max-width: 100%; }
+  /* La petite déco supérieure blanche: on la réduit sans la supprimer pour ne rien casser */
+  div[data-testid="stDecoration"] {
+    background: transparent !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: 0 !important;
+  }
 
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #0054A6 0%, #003d7a 100%);
-    }
-    [data-testid="stSidebar"] * { color: white !important; }
+  /* Remonter le contenu pour éviter tout chevauchement visuel */
+  .stAppViewContainer .main .block-container {
+    padding-top: 0.5rem !important;
+    margin-top: 0 !important;
+  }
 
-    .main-card {
-        background: white; border-radius: 20px; padding: 40px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin: 10px auto; max-width: 900px;
-    }
-    .main-title {
-        color: #0054A6; font-size: 2.8em; font-weight: 700; text-align: center;
-        margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
-    }
-    .subtitle { color: #666; font-size: 1.2em; text-align: center; margin-bottom: 30px; font-weight: 400; }
+  /* Premier bloc un peu plus proche du haut */
+  .main-card { margin-top: 6px !important; box-shadow: 0 6px 24px rgba(0,0,0,0.08) !important; }
+}
 
-    .stTextInput input {
-        border-radius: 12px !important; border: 2px solid #0054A6 !important; padding: 15px !important;
-        font-size: 1.1em !important; transition: all 0.3s ease;
-    }
-    .stTextInput input:focus {
-        border-color: #EE3124 !important; box-shadow: 0 0 0 3px rgba(238, 49, 36, 0.1) !important;
-    }
+#MainMenu { display: none; }
+footer { display: none; }
 
-    .stButton button {
-        background: linear-gradient(90deg, #EE3124 0%, #c41f14 100%); color: white; border: none; border-radius: 12px;
-        padding: 15px 40px; font-size: 1.1em; font-weight: 600; width: 100%; transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(238, 49, 36, 0.3);
-    }
-    .stButton button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(238, 49, 36, 0.4); }
+.block-container { padding-top: 1rem !important; }
+.main .block-container { padding-top: 1rem !important; max-width: 100%; }
 
-    .stSuccess { background-color: #d4edda; border-left: 5px solid #28a745; border-radius: 8px; padding: 15px; margin-top: 20px; }
-    .stError { background-color: #f8d7da; border-left: 5px solid #dc3545; border-radius: 8px; padding: 15px; margin-top: 20px; }
+/* Sidebar */
+[data-testid="stSidebar"] {
+  background: linear-gradient(180deg, #0054A6 0%, #003d7a 100%);
+}
+[data-testid="stSidebar"] * { color: white !important; }
 
-    .response-box {
-        background: #f8f9fa; border-left: 5px solid #0054A6; border-radius: 10px; padding: 25px; margin-top: 20px;
-        font-size: 1.05em; line-height: 1.7;
-    }
+/* Carte */
+.main-card {
+  background: white; border-radius: 20px; padding: 40px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.1); margin: 10px auto; max-width: 900px;
+}
+.main-title {
+  color: #0054A6; font-size: 2.8em; font-weight: 700; text-align: center;
+  margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+.subtitle { color: #666; font-size: 1.2em; text-align: center; margin-bottom: 30px; font-weight: 400; }
 
-    .logo-container { text-align: center; padding: 20px 0; margin-bottom: 30px; border-bottom: 2px solid rgba(255,255,255,0.2); }
-    [data-testid="stSidebar"] img { display: block; margin-left: auto; margin-right: auto; }
+/* Inputs */
+.stTextInput input {
+  border-radius: 12px !important; border: 2px solid #0054A6 !important; padding: 15px !important;
+  font-size: 1.1em !important; transition: all 0.3s ease;
+}
+.stTextInput input:focus {
+  border-color: #EE3124 !important; box-shadow: 0 0 0 3px rgba(238, 49, 36, 0.1) !important;
+}
 
-    .info-box { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; margin: 20px 0; backdrop-filter: blur(10px); }
-    .stSpinner > div { border-top-color: #EE3124 !important; }
+/* Boutons */
+.stButton button {
+  background: linear-gradient(90deg, #EE3124 0%, #c41f14 100%); color: white; border: none; border-radius: 12px;
+  padding: 15px 40px; font-size: 1.1em; font-weight: 600; width: 100%; transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(238, 49, 36, 0.3);
+}
+.stButton button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(238, 49, 36, 0.4); }
 
-    @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.8;} }
-    .pulse-icon { animation: pulse 2s infinite; }
+/* Messages */
+.stSuccess { background-color: #d4edda; border-left: 5px solid #28a745; border-radius: 8px; padding: 15px; margin-top: 20px; }
+.stError   { background-color: #f8d7da; border-left: 5px solid #dc3545; border-radius: 8px; padding: 15px; margin-top: 20px; }
 
-    @media (max-width: 768px) {
-        .main-card { padding: 20px; margin: 5px; border-radius: 15px; }
-        .main-title { font-size: 1.8em; }
-        .subtitle { font-size: 1em; }
-        .block-container { padding-top: 0 !important; }
-        .main .block-container { padding-top: 0.5rem !important; }
-    }
+/* Réponse */
+.response-box {
+  background: #f8f9fa; border-left: 5px solid #0054A6; border-radius: 10px; padding: 25px; margin-top: 20px;
+  font-size: 1.05em; line-height: 1.7;
+}
+
+/* Sidebar assets */
+.logo-container { text-align: center; padding: 20px 0; margin-bottom: 30px; border-bottom: 2px solid rgba(255,255,255,0.2); }
+[data-testid="stSidebar"] img { display: block; margin-left: auto; margin-right: auto; }
+
+/* Divers */
+.info-box { background: rgba(255,255,255,0.1); border-radius: 10px; padding: 15px; margin: 20px 0; backdrop-filter: blur(10px); }
+.stSpinner > div { border-top-color: #EE3124 !important; }
+@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.8;} }
+.pulse-icon { animation: pulse 2s infinite; }
 </style>
 """, unsafe_allow_html=True)
 
-# === JS: fermer auto la sidebar sur mobile, laisser ouverte sur desktop ===
+# === JS: auto-fermer la sidebar sur mobile (une fois par session) ===
 st.markdown("""
 <script>
 (function() {
   const MOBILE_MAX = 768;
   const isMobile = window.innerWidth <= MOBILE_MAX;
   const flag = "sidebar_autocollapse_done";
-
   if (isMobile && !sessionStorage.getItem(flag)) {
-    // Fonction pour cliquer sur le bouton hamburger quand il apparaît
     const tryCollapse = () => {
-      // Sélecteurs possibles du bouton menu selon versions Streamlit
-      const btn = document.querySelector('button[kind="header"]')
-               || document.querySelector('header [data-testid="baseButton-headerNoPadding"]')
-               || document.querySelector('header button[title]');
+      const btn =
+        document.querySelector('button[kind="header"]') ||
+        document.querySelector('header [data-testid="baseButton-headerNoPadding"]') ||
+        document.querySelector('header button[title]');
       if (btn) {
-        btn.click();                       // ferme la sidebar ouverte par défaut
-        sessionStorage.setItem(flag, "1"); // ne le fait qu'une fois par session
+        btn.click();
+        sessionStorage.setItem(flag, "1");
         return true;
       }
       return false;
     };
-
-    // Essai immédiat
     if (!tryCollapse()) {
-      // Observe le DOM jusqu'à ce que le header/bouton soit monté
-      const obs = new MutationObserver(() => {
-        if (tryCollapse()) { obs.disconnect(); }
-      });
+      const obs = new MutationObserver(() => { if (tryCollapse()) obs.disconnect(); });
       obs.observe(document.body, { childList: true, subtree: true });
-      // Sécurité: arrêt au bout de 5s
       setTimeout(() => obs.disconnect(), 5000);
     }
   }
@@ -194,10 +212,9 @@ with st.sidebar:
 
 # === CONTENU PRINCIPAL ===
 st.markdown('<div class="main-card">', unsafe_allow_html=True)
-
 st.markdown("""
 <h1 class="main-title">
-    <span class="pulse-icon">🛡️</span> Assistant Sécurité - Projet Ubeta
+  <span class="pulse-icon">🛡️</span> Assistant Sécurité - Projet Ubeta
 </h1>
 <p class="subtitle">Obtenez des réponses instantanées sur les procédures de sécurité</p>
 """, unsafe_allow_html=True)
@@ -210,7 +227,7 @@ q = st.text_input(
 
 st.markdown("""
 <p style='text-align: center; color: #666; font-size: 0.95em; margin-top: 15px; font-style: italic;'>
-    📚 Basé sur la documentation "Ubeta Field Development Project Environmental Impact Assessment"
+  📚 Basé sur la documentation "Ubeta Field Development Project Environmental Impact Assessment"
 </p>
 """, unsafe_allow_html=True)
 
@@ -230,21 +247,21 @@ if send_button and q.strip():
             st.success("✅ Réponse trouvée dans la base documentaire")
             st.markdown(f"""
             <div class="response-box">
-                {resp.output_text}
+              {resp.output_text}
             </div>
             """, unsafe_allow_html=True)
         except Exception as e:
             st.error("❌ Une erreur est survenue lors de la recherche")
+            import traceback
             st.markdown(f"**Détails de l'erreur :** `{str(e)}`")
             with st.expander("🔧 Informations techniques (pour le support)"):
-                import traceback
                 st.code(traceback.format_exc())
 
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.markdown("""
 <div style='text-align:center; margin-top:50px; padding:20px; color:#666; font-size:0.9em;'>
-    <p>⚠️ <strong>Important :</strong> Cet assistant fournit des informations basées sur la documentation officielle du projet Ubeta.</p>
-    <p>En cas d'urgence réelle, suivez toujours les protocoles établis et contactez immédiatement les responsables HSE.</p>
+  <p>⚠️ <strong>Important :</strong> Cet assistant fournit des informations basées sur la documentation officielle du projet Ubeta.</p>
+  <p>En cas d'urgence réelle, suivez toujours les protocoles établis et contactez immédiatement les responsables HSE.</p>
 </div>
 """, unsafe_allow_html=True)
